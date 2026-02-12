@@ -1,6 +1,5 @@
 requests
-openai
 google-api-python-client
 google-auth-oauthlib
-pillow
-
+google-auth-httplib2
+gTTS
