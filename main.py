@@ -1,31 +1,46 @@
 import os
 import requests
 import time
+from gtts import gTTS
 
-# AI FACTORY CONFIG
-DEEPSEEK_KEY = os.getenv("DEEPSEEK_API_KEY")
-YT_TOKEN = os.getenv("YOUTUBE_TOKEN_64")
+# --- CONFIGURATION ---
+VIDEO_FILENAME = "final_video.mp4"
+AUDIO_FILENAME = "voiceover.mp3"
+IMAGE_FILENAME = "background.jpg"
 
-def ai_video_factory():
-    print("[1/4] AI SUPERVISOR: Writing viral stories with DeepSeek...")
-    # Real DeepSeek Logic
-    time.sleep(10) 
-    
-    print("[2/4] AI DIRECTOR: Generating 3 high-quality visual scenes...")
-    time.sleep(15)
-    
-    print("[3/4] PRODUCTION: Rendering video frames and adding audio...")
-    # This simulates the heavy work of FFmpeg
-    time.sleep(30)
-    
-    print("[4/4] UPLOADER: Sending 3 videos to YouTube Studio...")
-    # Youtube Upload Simulation
-    print("SUCCESS: 3 Videos uploaded as PRIVATE.")
-    print("SUPERVISOR: Daily task completed. Factory is idle.")
-
-if __name__ == "__main__":
-    if not DEEPSEEK_KEY:
-        print("ERROR: DEEPSEEK_API_KEY is not set in Secrets!")
+def download_background_image():
+    print("[STEP 1] Downloading AI Tech background...")
+    # Downloads a random tech/nature image so FFmpeg never fails
+    url = "https://picsum.photos/1280/720" 
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(IMAGE_FILENAME, 'wb') as f:
+            f.write(response.content)
+        print(" -> Image downloaded successfully.")
     else:
-        ai_video_factory()
-        
+        print(" -> Error downloading image.")
+
+def generate_voiceover():
+    print("[STEP 2] Generating AI Voiceover...")
+    # In a real scenario, this text comes from DeepSeek
+    script = "Welcome to the future of AI. This video was fully automated by Python code."
+    tts = gTTS(text=script, lang='en')
+    tts.save(AUDIO_FILENAME)
+    print(" -> Audio file created.")
+
+def render_video():
+    print("[STEP 3] Rendering Video with FFmpeg...")
+    # Combines the downloaded image and generated audio into a video
+    # -loop 1: loops the image
+    # -shortest: ends video when audio ends
+    cmd = f"ffmpeg -y -loop 1 -i {IMAGE_FILENAME} -i {AUDIO_FILENAME} -c:v libx264 -tune stillimage -c:a aac -b:a 192k -pix_fmt yuv420p -shortest {VIDEO_FILENAME}"
+    os.system(cmd)
+    
+    if os.path.exists(VIDEO_FILENAME):
+        print(f" -> SUCCESS: {VIDEO_FILENAME} created successfully!")
+    else:
+        print(" -> ERROR: Video generation failed.")
+
+def upload_simulation():
+    print
+    
