@@ -1,7 +1,3 @@
 requests
-groq
-gTTS
-moviepy==1.0.3
+openai
 google-api-python-client
-google-auth-oauthlib
-google-auth-httplib2
