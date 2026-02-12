@@ -1,52 +1,30 @@
-import os, requests, time, base64, pickle
-from groq import Groq
-from gtts import gTTS
-from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
+import os
+import requests
 
-def get_youtube():
-    token_64 = os.environ.get("YOUTUBE_TOKEN_64")
-    with open("token.pickle", "wb") as f:
-        f.write(base64.b64decode(token_64))
-    with open("token.pickle", "rb") as t:
-        return build("youtube", "v3", credentials=pickle.load(t))
+# AI Supervisor Engine
+DEEPSEEK_KEY = os.getenv("DEEPSEEK_API_KEY")
+YT_TOKEN = os.getenv("YOUTUBE_TOKEN_64")
 
-def run_factory():
-    client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-    response = client.chat.completions.create(
-        messages=[{"role": "user", "content": "Shocking psychology fact (10 words)."}],
-        model="llama-3.3-70b-versatile")
-    fact_text = response.choices[0].message.content
-    
-    gTTS(text=fact_text, lang='en').save("audio.mp3")
-    audio = AudioFileClip("audio.mp3")
+def ai_storyteller():
+    """Step 1: DeepSeek writes the story and visual prompts"""
+    print("AI Supervisor is writing the script...")
+    # Logic for storytelling using DeepSeek
+    pass
 
-    clips = []
-    for i in range(3):
-        img_url = f"https://pollinations.ai/p/psychology_3d_style_{i}?width=720&height=1280&seed={time.time()}"
-        with open(f"{i}.jpg", "wb") as f:
-            f.write(requests.get(img_url).content)
-        clips.append(ImageClip(f"{i}.jpg").set_duration(audio.duration / 3 + 0.5))
+def ai_video_production():
+    """Step 2: Generate images and compile video"""
+    print("Generating scenes and editing video...")
+    # Logic for image generation and FFmpeg editing
+    pass
 
-    final_video = concatenate_videoclips(clips, method="compose").set_audio(audio)
-    final_video.write_videofile("final.mp4", fps=24, codec="libx264")
-
-    yt = get_youtube()
-    yt.videos().insert(
-        part="snippet,status",
-        body={
-            'snippet': {
-                'title': 'Psychology Fact #shorts',
-                'description': fact_text,
-                'tags': ['psychology', 'facts', 'ai'],
-                'categoryId': '27'
-            },
-            'status': {'privacyStatus': 'private'}
-        },
-        media_body=MediaFileUpload("final.mp4")
-    ).execute()
+def youtube_manager():
+    """Step 3: Private upload and Comment supervision"""
+    print("Uploading 3 videos as Private & managing comments...")
+    # Logic for YouTube API
+    pass
 
 if __name__ == "__main__":
-    run_factory()
-  
+    ai_storyteller()
+    ai_video_production()
+    youtube_manager()
+    
