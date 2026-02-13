@@ -1,24 +1,30 @@
-name: AI Video Factory Pro
+name: FINAL_EMPIRE_BOT
 on:
   workflow_dispatch:
 jobs:
-  build:
+  production:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-      - name: Install Tools
+
+      - name: Install System Tools
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
-          pip install requests openai edge-tts gradio_client
-      - name: Start Production
+          pip install requests openai edge-tts gradio_client google-api-python-client google-auth-oauthlib
+
+      - name: Execute Factory
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_TOKEN: ${{ secrets.YOUTUBE_TOKEN }}
         run: python main.py
         
