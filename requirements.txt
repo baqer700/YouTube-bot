@@ -1,4 +1,4 @@
 openai
 edge-tts
 gradio_client
-requests  # اگر لازم شد
+requests  #
