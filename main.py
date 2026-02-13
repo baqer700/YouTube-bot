@@ -30,7 +30,8 @@ def generate_content():
         PROMPT_QUOTE,
         model="microsoft/Phi-3-mini-4k-instruct",
         max_new_tokens=60,
-        temperature=0.85
+        temperature=0.85,
+        stream=False
     )
     quote = quote_resp.strip()
     print(f"Generated quote: {quote}")
@@ -123,7 +124,8 @@ def judge_content(quote, img_prompt):
     judgment = client.text_generation(
         judge_prompt,
         model="microsoft/Phi-3-mini-4k-instruct",
-        max_new_tokens=100
+        max_new_tokens=100,
+        stream=False
     )
     print("Judge:", judgment)
 
