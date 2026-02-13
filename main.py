@@ -4,14 +4,14 @@ import shutil
 import subprocess
 import smtplib
 from email.message import EmailMessage
-from openai import OpenAI
+from groq import Groq
 import edge_tts
 from gradio_client import Client
 
 # Configuration from GitHub Secrets
 MY_EMAIL = "baqerfazli4@gmail.com"
 EMAIL_PASS = os.getenv("EMAIL_APP_PASSWORD")
-DEEPSEEK_KEY = os.getenv("DEEPSEEK_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # ← این secret رو اضافه کردی
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 # File paths
@@ -19,18 +19,18 @@ IMAGE_PATH = "scene.jpg"
 VIDEO_CLIP_PATH = "animated_clip.mp4"
 AUDIO_PATH = "voice.mp3"
 FINAL_VIDEO = "final_video.mp4"
-MUSIC_PATH = "sample_music.mp3"  # باید یک فایل موسیقی کوتاه در مخزن بگذارید
+MUSIC_PATH = "sample_music.mp3"  # فایل موسیقی رو در repo بگذار
 
 PROMPT_QUOTE = (
     "Write one short, powerful, viral motivational quote in English "
     "(15-25 words) with a luxury, nighttime, neon city or supercar theme."
 )
 
-async def generate_content():
-    client = OpenAI(api_key=DEEPSEEK_KEY, base_url="https://api.deepseek.com")
+def generate_content():
+    client = Groq(api_key=GROQ_API_KEY)
 
     resp = client.chat.completions.create(
-        model="deepseek-chat",
+        model="llama-3.1-70b-versatile",  # مدل قوی و رایگان در Groq
         messages=[{"role": "user", "content": PROMPT_QUOTE}],
         max_tokens=60,
         temperature=0.85
@@ -143,7 +143,7 @@ def send_email():
 
 
 async def main():
-    quote, img_prompt = await generate_content()
+    quote, img_prompt = generate_content()  # حالا sync است (Groq ساده‌تر)
 
     if not await generate_image(img_prompt):
         print("Image failed → stopping")
