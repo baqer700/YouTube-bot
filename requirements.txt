@@ -1,6 +1,4 @@
-requests
 openai
 edge-tts
-google-api-python-client
-google-auth-oauthlib
-google-auth-httplib2
+gradio_client
+requests  # اگر لازم شد
