@@ -1,24 +1,19 @@
-name: AI Video Factory Pro
-on:
-  schedule:
-    - cron: '0 */8 * * *'
-  workflow_dispatch:
-jobs:
-  build:
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-      - name: Install
-        run: |
-          sudo apt-get update && sudo apt-get install -y ffmpeg
-          pip install -r requirements.txt
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install dependencies
+        run: pip install requests openai edge-tts google-api-python-client google-auth gradio_client
       - name: Start Production
-        env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          YOUTUBE_TOKEN_64: ${{ secrets.YOUTUBE_TOKEN_64 }}
         run: python main.py
-        
+        env:
+          SHORTAPI_KEY: ${{ secrets.SHORTAPI_KEY }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+          YOUTUBE_TOKEN: ${{ secrets.YOUTUBE_TOKEN }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          
