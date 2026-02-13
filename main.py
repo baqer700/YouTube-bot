@@ -1,9 +1,7 @@
 import os
-import time
 import asyncio
-import smtplib
 import requests
-import json
+import smtplib
 from email.message import EmailMessage
 from openai import OpenAI
 import edge_tts
@@ -11,204 +9,114 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google.oauth2.credentials import Credentials
 
-# ==========================================
-#  MILLION DOLLAR FACTORY CONFIGURATION
-# ==========================================
+# --- LOAD SECRETS FROM GITHUB ---
+SHORTAPI_KEY = os.getenv("SHORTAPI_KEY")       
+HF_TOKEN = os.getenv("HF_TOKEN")               
+DEEPSEEK_KEY = os.getenv("DEEPSEEK_API_KEY")
+EMAIL_PASS = os.getenv("EMAIL_APP_PASSWORD") 
+YT_CLIENT_ID = os.getenv("YOUTUBE_CLIENT_ID")
+YT_TOKEN = os.getenv("YOUTUBE_TOKEN")
+MY_EMAIL = "baqerfazli4@gmail.com"
 
-# 1. API KEYS (From GitHub Secrets)
-SHORTAPI_KEY = os.getenv("SHORTAPI_KEY")       # For GPT-4o, Kling, Sora
-HF_TOKEN = os.getenv("HF_TOKEN")               # Backup (Hugging Face)
-YOUTUBE_CLIENT_SECRET = os.getenv("YOUTUBE_CLIENT_SECRET")
-YOUTUBE_CLIENT_ID = os.getenv("YOUTUBE_CLIENT_ID")
-# Note: For email fallback, you need an App Password in secrets named EMAIL_APP_PASSWORD
-EMAIL_PASSWORD = os.getenv("EMAIL_APP_PASSWORD") 
-USER_EMAIL = "baqerfazli4@gmail.com"
-
-# 2. FILE PATHS
-VIDEO_FILENAME = "final_video_kling.mp4"
-AUDIO_FILENAME = "voiceover.mp3"
-MUSIC_FILENAME = "background_music.mp3"
-TEMP_VIDEO = "temp_visual.mp4"
-
-# 3. SHORTAPI SETUP
-SHORTAPI_BASE_URL = "https://api.shortapi.ai/v1"
-
-class ContentFactory:
+class UltimateEmpireBot:
     def __init__(self):
-        print("--- INITIALIZING AI FACTORY ---")
-        if not SHORTAPI_KEY:
-            print("CRITICAL WARNING: SHORTAPI_KEY is missing.")
-        
-        self.client = OpenAI(
-            base_url=SHORTAPI_BASE_URL,
-            api_key=SHORTAPI_KEY
+        self.video_file = "final_viral_video.mp4"
+        self.audio_file = "voice.mp3"
+        self.image_file = "scene.jpg"
+
+    async def generate_story(self):
+        print("[!] CONSULTING DEEPSEEK AI...")
+        client = OpenAI(api_key=DEEPSEEK_KEY, base_url="https://api.deepseek.com")
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{"role": "user", "content": "Create a high-energy 15-second script about the future of AI."}]
         )
+        return response.choices[0].message.content
 
-    def generate_script(self):
-        print("\n[STEP 1] BRAIN: Generating Viral Script with GPT-4o...")
+    def create_visuals(self, prompt):
+        print("[!] GENERATING CINEMATIC VISUALS...")
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4o",  # Using the smartest model available
-                messages=[
-                    {"role": "system", "content": "You are a professional YouTube scriptwriter."},
-                    {"role": "user", "content": "Write a short, motivational 30-second script about 'The Future of AI'. Keep it punchy."}
-                ]
-            )
-            script = response.choices[0].message.content
-            print(f" -> Script Generated: {script[:50]}...")
-            return script
-        except Exception as e:
-            print(f" -> Error in Script Gen: {e}")
-            return "AI is changing the world. Be ready for the future."
-
-    def generate_visuals(self, prompt_context):
-        print("\n[STEP 2] EYES: Generating Video with Kling/Sora (via ShortAPI)...")
-        # Since ShortAPI uses OpenAI format for image/video generation in some endpoints, 
-        # or specific endpoints for video. Assuming standard Image Gen first for safety due to cost.
-        # Strategy: Generate a High-Quality Image then Animate it (Cheaper & Safer).
-        
-        try:
-            # 1. Generate Image (DALL-E 3 or Flux via ShortAPI)
-            print(" -> Generating Base Image...")
-            img_response = self.client.images.generate(
-                model="flux-pro", # High quality model
-                prompt=f"Cinematic shot, 8k, futuristic city, {prompt_context}",
-                size="1024x1024"
-            )
-            image_url = img_response.data[0].url
-            
-            # Download Image
-            img_data = requests.get(image_url).content
-            with open("base_image.jpg", "wb") as f:
-                f.write(img_data)
-            print(" -> Base Image Downloaded.")
-
-            # 2. Animate Image (Image-to-Video) - Placeholder logic for Kling
-            # Note: If direct Kling API isn't standard OpenAI format, we use a standard simple animation 
-            # with FFmpeg fallback to save your credit if complex API fails.
-            # For this code, we will make a video from the image using FFmpeg to ensure 100% success without burning all credit on failed API calls.
-            # (If you want strict Kling usage, it requires specific endpoint documentation from ShortAPI).
-            
-            # REPLACEMENT: Robust FFmpeg Zoom Effect (Free & Reliable)
-            print(" -> Animating Image with FFmpeg (Zoom Effect)...")
-            cmd = f"ffmpeg -y -loop 1 -i base_image.jpg -vf \"scale=8000:-1,zoompan=z='min(zoom+0.0015,1.5)':d=750:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1280x720\" -c:v libx264 -t 30 -pix_fmt yuv420p {TEMP_VIDEO}"
-            os.system(cmd)
-            
-            if os.path.exists(TEMP_VIDEO):
-                print(" -> Visuals Ready.")
-                return True
-            else:
-                return False
-
-        except Exception as e:
-            print(f" -> Error in Video Gen: {e}")
-            return False
-
-    async def generate_audio(self, text):
-        print("\n[STEP 3] VOICE: Generating Narration with Edge-TTS...")
-        communicate = edge_tts.Communicate(text, "en-US-ChristopherNeural")
-        await communicate.save(AUDIO_FILENAME)
-        print(" -> Voiceover Saved.")
-
-    def download_music(self):
-        print("\n[STEP 4] MUSIC: Downloading Royalty-Free Background Music...")
-        # Direct link to a safe, royalty-free cinematic track
-        music_url = "https://cdn.pixabay.com/download/audio/2022/10/25/audio_b283626778.mp3" 
-        try:
-            r = requests.get(music_url)
-            with open(MUSIC_FILENAME, 'wb') as f:
-                f.write(r.content)
-            print(" -> Music Downloaded.")
+            # Try ShortAPI first (Premium)
+            s_client = OpenAI(base_url="https://api.shortapi.ai/v1", api_key=SHORTAPI_KEY)
+            res = s_client.images.generate(model="flux-pro", prompt=f"Hyper-realistic, 8k, cinematic: {prompt[:100]}")
+            img_data = requests.get(res.data[0].url).content
+            with open(self.image_file, "wb") as f: f.write(img_data)
         except:
-            print(" -> Failed to download music. Proceeding without it.")
+            print("[#] SHORTAPI FAILED. SWITCHING TO HUGGING FACE...")
+            # Backup: Hugging Face (Free)
+            from gradio_client import Client
+            hf = Client("black_forest_labs/FLUX.1-schnell", hf_token=HF_TOKEN)
+            result = hf.predict(prompt=prompt, api_name="/predict")
+            import shutil
+            shutil.move(result[0] if isinstance(result, tuple) else result, self.image_file)
 
-    def edit_final_video(self):
-        print("\n[STEP 5] EDITING: Merging Video, Voice, and Music...")
-        # Complex FFmpeg command:
-        # 1. Takes Video, Voice, Music
-        # 2. Lowers music volume to 10% (0.1)
-        # 3. Mixes everything
-        # 4. Cuts video to length of audio
-        
+    async def create_voice(self, text):
+        print("[!] RECORDING AI VOICE...")
+        communicate = edge_tts.Communicate(text, "en-US-ChristopherNeural")
+        await communicate.save(self.audio_file)
+
+    def build_video(self):
+        print("[!] ASSEMBLING MASTERPIECE WITH FFMPEG...")
+        # Music URL (Royalty Free)
+        music_url = "https://www.bensound.com/bensound-music/bensound-epic.mp3"
+        with open("bg_music.mp3", "wb") as f: f.write(requests.get(music_url).content)
+
         cmd = (
-            f"ffmpeg -y -i {TEMP_VIDEO} -i {AUDIO_FILENAME} -i {MUSIC_FILENAME} "
-            f"-filter_complex \"[2:a]volume=0.1[music];[1:a][music]amix=inputs=2:duration=first[audio]\" "
-            f"-map 0:v -map \"[audio]\" -c:v copy -c:a aac -shortest {VIDEO_FILENAME}"
+            f"ffmpeg -y -loop 1 -i {self.image_file} -i {self.audio_file} -i bg_music.mp3 "
+            f"-filter_complex \"[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,zoompan=z='min(zoom+0.0015,1.5)':d=300:s=1080x1920[v];"
+            f"[2:a]volume=0.1[m];[1:a][m]amix=inputs=2:duration=first[a]\" "
+            f"-map \"[v]\" -map \"[a]\" -c:v libx264 -t 15 -pix_fmt yuv420p {self.video_file}"
         )
         os.system(cmd)
-        
-        if os.path.exists(VIDEO_FILENAME):
-            print(f" -> SUCCESS: {VIDEO_FILENAME} created!")
-            return True
-        return False
+        return os.path.exists(self.video_file)
 
-    def upload_to_youtube(self, title, description):
-        print("\n[STEP 6-A] UPLOAD: Attempting YouTube Upload...")
-        # Requires 'token.json' or Refresh Token logic. 
-        # Since this runs in GitHub Actions, we need a robust method.
-        # IF token is missing, we skip to Email Fallback.
-        if not os.path.exists("token.json") and not os.getenv("YOUTUBE_TOKEN_JSON"):
-            print(" -> No YouTube Token found. Skipping to Email Fallback.")
-            return False
+    def upload_to_youtube(self):
+        print("[!] ATTEMPTING YOUTUBE UPLOAD...")
+        try:
+            # Use your saved token from GitHub Secrets
+            creds = Credentials(token=YT_TOKEN, client_id=YT_CLIENT_ID)
+            youtube = build("youtube", "v3", credentials=creds)
             
-        try:
-            # (Authentication logic placeholder - requires valid token file)
-            print(" -> Authenticating...")
-            # If successful upload:
-            print(" -> Upload Successful (Simulated).")
+            request = youtube.videos().insert(
+                part="snippet,status",
+                body={
+                    "snippet": {"title": "AI Revolution #Shorts", "description": "Made by Baqer Empire Bot", "categoryId": "27"},
+                    "status": {"privacyStatus": "public"}
+                },
+                media_body=MediaFileUpload(self.video_file, chunksize=-1, resumable=True)
+            )
+            request.execute()
+            print(">>> SUCCESS: VIDEO IS LIVE ON YOUTUBE!")
             return True
         except Exception as e:
-            print(f" -> YouTube Upload Failed: {e}")
+            print(f">>> YOUTUBE UPLOAD FAILED: {e}")
             return False
 
-    def email_fallback(self):
-        print("\n[STEP 6-B] FALLBACK: Sending Video to Email...")
-        if not EMAIL_PASSWORD:
-            print(" -> Error: No EMAIL_APP_PASSWORD in Secrets. Cannot send email.")
-            return
-
+    def email_backup(self):
+        print("[!] SENDING TO EMAIL AS BACKUP...")
         msg = EmailMessage()
-        msg['Subject'] = 'Your AI Factory Video is Ready!'
-        msg['From'] = USER_EMAIL
-        msg['To'] = USER_EMAIL
-        msg.set_content("The AI factory has finished production. The video is attached.")
-
-        # Attach Video
-        try:
-            with open(VIDEO_FILENAME, 'rb') as f:
-                file_data = f.read()
-                msg.add_attachment(file_data, maintype='video', subtype='mp4', filename=VIDEO_FILENAME)
-
-            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-                smtp.login(USER_EMAIL, EMAIL_PASSWORD)
-                smtp.send_message(msg)
-            print(" -> EMAIL SENT SUCCESSFULLY!")
-        except Exception as e:
-            print(f" -> Email Failed (File might be too big): {e}")
-
-async def main():
-    factory = ContentFactory()
-    
-    # 1. Script
-    script = factory.generate_script()
-    
-    # 2. Visuals & Audio
-    visual_ok = factory.generate_visuals(script)
-    await factory.generate_audio(script)
-    factory.download_music()
-    
-    # 3. Final Edit
-    if visual_ok:
-        final_ok = factory.edit_final_video()
+        msg['Subject'] = '🚀 Empire Video Ready (YouTube Upload Failed/Skipped)'
+        msg['From'] = MY_EMAIL
+        msg['To'] = MY_EMAIL
+        msg.set_content("The YouTube upload failed, but your video is ready here.")
         
-        if final_ok:
-            # 4. Distribution
-            uploaded = factory.upload_to_youtube("AI Generated Future", script)
-            if not uploaded:
-                factory.email_fallback()
-    else:
-        print("Production Failed at Visual Stage.")
+        with open(self.video_file, 'rb') as f:
+            msg.add_attachment(f.read(), maintype='video', subtype='mp4', filename=self.video_file)
+            
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as s:
+            s.login(MY_EMAIL, EMAIL_PASS)
+            s.send_message(msg)
+        print(">>> SUCCESS: VIDEO SENT TO GMAIL!")
+
+async def run_empire():
+    bot = UltimateEmpireBot()
+    script = await bot.generate_story()
+    bot.create_visuals(script)
+    await bot.create_voice(script)
+    if bot.build_video():
+        if not bot.upload_to_youtube():
+            bot.email_backup()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(run_empire())
     
