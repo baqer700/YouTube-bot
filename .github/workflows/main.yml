@@ -3,7 +3,7 @@ name: AI Video Pipeline
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */8 * * *'   # Every 8 hours (00:00, 08:00, 16:00 UTC)
+    - cron: '0 */8 * * *'   # Every 8 hours
 
 jobs:
   generate:
@@ -16,15 +16,15 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install system dependencies
+      - name: Install ffmpeg
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
 
-      - name: Install Python dependencies
+      - name: Install Python packages
         run: pip install -r requirements.txt
 
-      - name: Run pipeline
+      - name: Run the script
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
