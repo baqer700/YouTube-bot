@@ -1,4 +1,3 @@
 openai
 edge-tts
 gradio_client
-requests  #
